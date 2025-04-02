@@ -1,5 +1,11 @@
 const mongoose = require("mongoose");
+const { HookNextFunction } = require("mongoose");
+const bcrypt = require("bcrypt");
 
+interface IUser {
+  first_name: string;
+  last_name: string;
+}
 const userSchema = new mongoose.Schema(
   {
     first_name: {
@@ -70,7 +76,19 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
+userSchema.pre("save", async function (next: any) {
+  try {
+    if (this.isModified("password")) {
+      this.password = await bcrypt.hash(this.password, 10);
+      next();
+    } else {
+      next();
+    }
+  } catch (err) {
+    console.log(err, "error in password encryption");
+    return;
+  }
+});
 // userSchema.pre("save", function (next) {});
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
