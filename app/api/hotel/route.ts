@@ -19,3 +19,25 @@ export async function POST(req: any) {
     );
   }
 }
+export async function GET(req: any) {
+  try {
+    await dbConfig();
+    const hotel = await Hotel.find({})
+      .populate({
+        path: "rooms",
+        populate: {
+          path: "amenties",
+        },
+      })
+      .populate("amenties");
+    return NextResponse.json(
+      { Message: "Hotel is fetched sucessfully!", data: hotel },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      { Message: "Something went Wrong!", error: error },
+      { status: 500 }
+    );
+  }
+}
