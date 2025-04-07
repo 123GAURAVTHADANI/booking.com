@@ -22,21 +22,18 @@ export async function POST(req: any) {
 export async function GET(req: any) {
   try {
     await dbConfig();
-    const hotel = await Hotel.find({})
-      .populate({
-        path: "rooms",
-        populate: {
-          path: "amenties",
-        },
-      })
-      .populate("amenties");
+    const { searchParams } = new URL(req.url);
+    let hotelLocation = searchParams.get("location");
+    let checkInDate = searchParams.get("checkInDate");
+    let checkOutDate = searchParams.get("checkOutDate");
+    let hotels = await Hotel.find({ location: hotelLocation });
     return NextResponse.json(
-      { Message: "Hotel is fetched sucessfully!", data: hotel },
+      { Message: "Hotel is fetched sucessfully!", hotels: hotels },
       { status: 200 }
     );
   } catch (error: any) {
     return NextResponse.json(
-      { Message: "Something went Wrong!", error: error },
+      { Message: "Something went Wrong!", error: error.message },
       { status: 500 }
     );
   }
