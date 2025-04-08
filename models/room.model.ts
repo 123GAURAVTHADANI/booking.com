@@ -11,7 +11,8 @@ const roomSchema = new mongoose.Schema({
     minLength: 5,
   },
   hotel: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Hotel",
     required: true,
   },
   amenties: [
