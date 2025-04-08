@@ -1,0 +1,29 @@
+// Promise.resolve(1)
+//   .then((x) => x + 1)
+//   .then((x) => { throw new Error('My Error') })
+//   .catch(() => 1)
+//   .then((x) => x + 1)
+//   .then((x) => console.log(x))
+//   .catch(console.error)
+
+//   1 : Resolving 1
+//  2 : x : 1 ; 2
+//
+// Find number of occurrences of the given element from the given array. Return the 0 if data is not available.
+
+var a = [26, "apple", "banana", ["apple", 28], [26, "apple"]];
+function removeNestedArray(array) {
+  let temp_array = [];
+  for (let i = 0; i < array.length; i++) {
+    if (Array.isArray(array[i])) {
+      return removeNestedArray(array[i]);
+    } else {
+      temp_array.push(array[i]);
+    }
+  }
+  return temp_array;
+}
+
+function checkFrequency(parameter) {
+    
+}

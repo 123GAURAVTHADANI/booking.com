@@ -28,6 +28,8 @@ export async function GET(req: any) {
     let checkInDate = searchParams.get("checkInDate");
     let checkOutDate = searchParams.get("checkOutDate");
     let hotels = await Hotel.find({ location: hotelLocation });
+    // console.log(hotels);
+    let rooms_id = hotels.map((item: any) => item.rooms).flat(1);
     // we are finding the overlapped booking
     const bookedHotels = await Booking.find({
       location: hotelLocation,
@@ -38,14 +40,21 @@ export async function GET(req: any) {
         },
       ],
     });
+    let booked_room_ids = bookedHotels.map((room: any) => room);
+    
+    // 2 hotels : 2 rooms 2 rooms
     // Id store array , total hotels negate
-    // console.log("bookedHotels", bookedHotels);
-    if (bookedHotels.length == 0) {
-      return NextResponse.json(
-        { Message: "Hotel is fetched sucessfully!", hotels: hotels },
-        { status: 200 }
-      );
-    }
+    console.log("bookedHotels", bookedHotels);
+    // if (bookedHotels.length == 0) {
+    //   return NextResponse.json(
+    //     { Message: "Hotel is fetched sucessfully!", hotels: hotels },
+    //     { status: 200 }
+    //   );
+    // }
+    return NextResponse.json(
+      { Message: "Booked Hotel", hotels: bookedHotels },
+      { status: 200 }
+    );
   } catch (error: any) {
     return NextResponse.json(
       { Message: "Something went Wrong!", error: error.message },
