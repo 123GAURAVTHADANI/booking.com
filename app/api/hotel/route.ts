@@ -1,60 +1,83 @@
 import dbConfig from "@/lib/db.config";
 import Booking from "@/models/booking.model";
 import Hotel from "@/models/hotel.model";
-import { NextResponse } from "next/server";
-// import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: any) {
+//getting function
+export async function GET(req: NextRequest) {
   try {
     await dbConfig();
-    const hotel_detail = await req.json();
-    const user = await Hotel.create(hotel_detail);
-    return NextResponse.json(
-      { Message: "Hotel is created sucessfully!", data: user },
-      { status: 201 }
-    );
-  } catch (error: any) {
-    return NextResponse.json(
-      { Message: "Something went Wrong!", error: error },
-      { status: 500 }
-    );
-  }
-}
-export async function GET(req: any) {
-  try {
-    await dbConfig();
-    const { searchParams } = new URL(req.url);
-    let hotelLocation = searchParams.get("location");
-    let checkInDate = searchParams.get("checkInDate");
-    let checkOutDate = searchParams.get("checkOutDate");
-    let hotels = await Hotel.find({ location: hotelLocation });
-    let rooms_id = hotels.flatMap((item: any) => item.rooms.map(String));
+
+    const queries = req?.nextUrl?.searchParams;
+    const location = queries.get("location");
+    let checkInDate = queries.get("checkInDate");
+    let checkOutDate = queries.get("checkOutDate");
+    if (!(location && checkInDate && checkOutDate)) {
+      return NextResponse.json(
+        { message: "incomplete details" },
+        { status: 401 }
+      );
+    }
+    console.log(location);
+    //all hotels at given location
+    let totalHotels_at_location = await Hotel.find({ location: location });
+    //all rooms of hotels
+    let total_rooms = totalHotels_at_location
+      .map((item: any) => item.rooms)
+      .flat();
+    console.log(total_rooms, "total rooms");
+    //sir's code +++++
+
     const bookedHotels = await Booking.find({
-      location: hotelLocation,
+      location: location,
       $or: [
         {
-          checkInDate: { $lte: checkOutDate },
-          checkOutDate: { $gte: checkInDate },
+          checkInDate: { $lte: checkOutDate }, //nayi ki checkoutdate purani ki check in date se jyada h or eql h to
+          checkOutDate: { $gte: checkInDate }, //nayi ki checkindate purani ki checkoutdate se kam h to
         },
       ],
     });
+    //gt+++++
 
+    //seperating booked rooms--------
+    let bookedRoomsId = bookedHotels.map((items: any) => items.room.toString());
+    console.log(bookedRoomsId, "booked rooms");
+    //
 
-    let booked_room_ids = new Set(
-      bookedHotels.map((element: any) => element.room.toString())
-    );
+    //finding hotels with only available rooms
+    let result = totalHotels_at_location
+      .map((hotel: any) => {
+        const availableRooms = hotel.rooms.filter(
+          (roomId: any) => !bookedRoomsId.includes(roomId.toString())
+        );
 
-    const availableRooms = rooms_id.filter(
-      (room: any) => !booked_room_ids.has(room.toString())
-    );
-    
-    // return NextResponse.json(
-    //   { Message: "Booked Hotel", hotels: availableHotels },
-    //   { status: 200 }
-    // );
-  } catch (error: any) {
+        return {
+          ...hotel.toObject(), //queries return us mongoose docs ,converted into js objects
+          rooms: availableRooms,
+        };
+      })
+      .filter((hotel: any) => hotel.rooms.length > 0); //removed hotels with 0 rooms
+
+    console.log(result, "result");
+    //
+    if (bookedHotels.length < 1) {
+      return NextResponse.json(
+        {
+          Message: "Hotets are fetched sucessfully!",
+          hotels: totalHotels_at_location,
+        },
+        { status: 200 }
+      );
+    }
+
     return NextResponse.json(
-      { Message: "Something went Wrong!", error: error.message },
+      { Message: "Hotets are fetched sucessfully!", hotels: result },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    console.log(err);
+    return NextResponse.json(
+      { message: "server error", error: err.message },
       { status: 500 }
     );
   }
